@@ -37,9 +37,23 @@ The platform can be implemented using modern cloud-native technologies such as:
 - Database per service pattern
 - Message brokers for inter-service communication
 
+---
+
 ## 📦 Deployment
 1. Clone the repository
    ```bash
    git clone <repository-url>
    ```
 2. 
+
+---
+
+## 🤝 Stakeholders
+Smart Healthcare is designed for:
+- Hospitals and Clinics
+- Pharmacies
+- Insurance Providers
+- Healthcare Administrators
+
+## 📄 License
+This project is licensed under the MIT License. See the LICENSE file for details.
