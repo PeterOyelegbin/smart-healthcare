@@ -1,3 +1,6 @@
 fastapi[standard]
 sqlalchemy
 alembic
+python-jose
+argon2-cffi
+python-decouple
