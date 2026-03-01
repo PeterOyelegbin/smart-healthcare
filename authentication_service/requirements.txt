@@ -4,3 +4,4 @@ alembic
 python-jose
 argon2-cffi
 python-decouple
+uvicorn

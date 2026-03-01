@@ -42,7 +42,7 @@ The platform can be implemented using modern cloud-native technologies such as:
 ## 📦 Deployment
 1. Clone the repository
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/PeterOyelegbin/smart-healthcare.git
    ```
 2. 
 

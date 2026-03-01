@@ -1,0 +1,27 @@
+# Deploy microservices to Kubernetes using GitHub Actions
+name: Deploy to Kubernetes
+on:
+  push:
+    branches:
+      - main
+    paths:
+      # - 'authentication_service/**'
+      - 'patient_service/**'
+      - 'doctor_service/**'
+      - 'appointment_service/**'
+      
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Kubernetes
+        uses: azure/setup-kubectl@v1
+        with:
+          version: 'latest'
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/authentication-deployment.yaml
+          kubectl apply -f k8s/authentication-service.yaml
+          # Add similar commands for other microservices (e.g., patient, doctor, appointment)

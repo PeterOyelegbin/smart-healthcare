@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr, FileUrl
-from typing import Optional
+from pydantic import BaseModel, EmailStr, FileUrl, StringConstraints
+from typing import Optional, Annotated
 from uuid import UUID
 
 class User(BaseModel):
@@ -17,7 +17,7 @@ class User(BaseModel):
 class Signup(BaseModel):
     organisation: str
     email: EmailStr
-    password: str
+    password: Annotated[str, StringConstraints(min_length=6, max_length=50)]
 
 class Login(BaseModel):
     email: EmailStr
@@ -29,6 +29,6 @@ class Token(BaseModel):
     
 class UpdatePassword(BaseModel):
     old_password: str
-    new_password: str
+    new_password: Annotated[str, StringConstraints(min_length=6, max_length=50)]
     confirm_password: str
     

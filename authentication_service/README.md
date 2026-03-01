@@ -32,8 +32,8 @@ Built with FastAPI for high performance, SQLAlchemy for database ORM, and Alembi
 ### Installation
 1. Clone the repository:
 ```bash
-git clone <your-repository-url>
-cd authentication_service
+git clone https://github.com/PeterOyelegbin/smart-healthcare.git
+cd smart-healthcare/authentication_service
 ```
 2. Create and activate a virtual environment:
 ```bash
