@@ -3,5 +3,6 @@ sqlalchemy
 alembic
 python-jose
 argon2-cffi
+redis
 python-decouple
 uvicorn

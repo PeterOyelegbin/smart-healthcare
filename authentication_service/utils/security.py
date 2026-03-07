@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from jose import jwt
@@ -18,5 +19,21 @@ def create_access_token(data: dict):
     return jwt.encode(to_encode, config('SECRET_KEY'), algorithm=config('ALGORITHM'))
 
 def decode_access_token(token: str):
-    payload = jwt.decode(token, config('SECRET_KEY'), algorithms=[config('ALGORITHM')])
-    return payload.get("sub")  # user email
+    try:
+        payload = jwt.decode(token, config('SECRET_KEY'), algorithms=[config('ALGORITHM')])
+        return payload.get("sub")  # user email
+    except jwt.JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token!")
+
+def get_expires_at(token: str) -> int:
+    payload = jwt.decode(token, config('SECRET_KEY'), algorithms=[config('ALGORITHM')], options={"verify_exp": False})
+    exp_timestamp = payload.get("exp")
+    if exp_timestamp:
+        expires_at = datetime.fromtimestamp(exp_timestamp)
+        expires_in_seconds = max(1, int((expires_at - datetime.utcnow()).total_seconds()))
+        if expires_in_seconds <= 0:
+            return 3600  # 1 hour default for expired tokens
+    else:
+        # Default expiration if not in token (2 hours)
+        expires_in_seconds = 2 * 60 * 60
+    return expires_in_seconds

@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from database.models import User
-from database.db_config import get_db
+from database.db_config import get_db, redis_client
 from fastapi import Depends, security, HTTPException, status
-from .security import hash_password, verify_password, create_access_token, decode_access_token
+from .security import hash_password, verify_password, create_access_token, decode_access_token, get_expires_at
 
 oauth2_scheme = security.HTTPBearer()
 
@@ -25,13 +25,25 @@ def authenticate_user(db: Session, email: str, password: str):
     token = create_access_token({"sub": user.email})
     return token
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def blacklist_token(token: str) -> bool:
     try:
-        user_email = decode_access_token(token.credentials)
-        user = db.query(User).filter(User.email == user_email).first()
-        return user
+        expires_in = get_expires_at(token)
+        key = f"blacklist:{token}"
+        redis_client.setex(key, expires_in, "revoked")
+        return True
     except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials!")
+        return False
+
+def is_token_blacklisted(token: str) -> bool:
+    key = f"blacklist:{token}"
+    return redis_client.exists(key) > 0
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    if is_token_blacklisted(token.credentials):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired, login again to continue.")
+    user_email = decode_access_token(token.credentials)
+    user = db.query(User).filter(User.email == user_email).first()
+    return user
     
 def require_admin(current_user: User = Depends(get_current_user)):
     if not current_user or not current_user.is_admin:
