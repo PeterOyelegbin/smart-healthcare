@@ -31,9 +31,7 @@ def get_expires_at(token: str) -> int:
     if exp_timestamp:
         expires_at = datetime.fromtimestamp(exp_timestamp)
         expires_in_seconds = max(1, int((expires_at - datetime.utcnow()).total_seconds()))
-        if expires_in_seconds <= 0:
-            return 3600  # 1 hour default for expired tokens
     else:
-        # Default expiration if not in token (2 hours)
-        expires_in_seconds = 2 * 60 * 60
+        # Default expiration if not in token (3 hours)
+        expires_in_seconds = 3 * 60 * 60
     return expires_in_seconds
