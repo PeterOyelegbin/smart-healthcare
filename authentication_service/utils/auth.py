@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from database.models import User
 from database.db_config import get_db, redis_client
 from fastapi import Depends, security, HTTPException, status
-from .security import hash_password, verify_password, create_access_token, decode_access_token, get_expires_at
+from .security import hash_password, verify_password, create_token_pair, decode_token, get_expires_at
 
 oauth2_scheme = security.HTTPBearer()
 
@@ -22,7 +22,7 @@ def authenticate_user(db: Session, email: str, password: str):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password!")
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive, contact support!")
-    token = create_access_token({"sub": user.email})
+    token = create_token_pair({"sub": user.email})
     return token
 
 def blacklist_token(token: str) -> bool:
@@ -41,7 +41,7 @@ def is_token_blacklisted(token: str) -> bool:
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     if is_token_blacklisted(token.credentials):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired, login again to continue.")
-    user_email = decode_access_token(token.credentials)
+    user_email = decode_token(token.credentials).get("sub")
     user = db.query(User).filter(User.email == user_email).first()
     return user
     

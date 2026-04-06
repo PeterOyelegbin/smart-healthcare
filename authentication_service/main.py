@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from routers import auth, users, admin
-from utils.security import decode_access_token
+from utils.security import decode_token
 from utils.logger import time, logger
 
 # initialize the application
@@ -33,7 +33,7 @@ async def audit_middleware(request: Request, call_next):
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ")[1]
         try:
-            user_email = decode_access_token(token)
+            user_email = decode_token(token).get("sub")
         except Exception:
             user_email = "Authentication Failed"
     response = await call_next(request)
