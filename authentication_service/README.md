@@ -1,33 +1,34 @@
 # Smart Healthcare System - Authentication Service
-This microservice handles all user authentication and authorization for the Smart Healthcare System. It is responsible for user registration, login, token generation (JWT), and protecting routes for doctors, patients, and administrators.
+This microservice handles all user authentication, authorization, and basic user management for the Smart Healthcare System. It is responsible for user registration, login, token generation (JWT), secure token refresh, token blacklisting via Redis, and protecting endpoints based on user roles and status.
 
 Built with FastAPI for high performance, SQLAlchemy for database ORM, and Alembic for database migrations.
 
 ## ✨ Features
-- User Registration: Allows new users (patients, doctors, admins) to create an account.
-- Secure Login: Authenticates users and returns a JWT access token.
-- JWT Authentication: Issues and validates stateless JSON Web Tokens.
-- Role-Based Access Control (RBAC): Enforces permissions based on user roles (e.g., patient, doctor, admin).
-- Password Hashing: Uses passlib with Bcrypt for secure password storage.
-- Database Migrations: Manages database schema changes seamlessly with Alembic.
-- CORS Middleware: Configured to accept requests from the frontend application.
+- **User Registration & Login**: Allows users (system users and admins) to securely register and authenticate.
+- **JWT Authentication with Refresh**: Issues stateless access tokens and secure refresh tokens that can be used for session extension.
+- **Token Blacklisting**: Integrates with Redis to securely invalidate active tokens upon logout.
+- **Role-Based Access Control (RBAC)**: Distinguishes between regular users and top-level admins (`is_admin` flags) dynamically for secured routes.
+- **Password Hashing**: Uses `argon2-cffi` for state-of-the-art secure password hashing.
+- **Audit Logging**: Custom HTTP middleware that automatically logs request metadata (method, path, status, IP, duration, and user identity) for robust monitoring and auditing.
+- **Database Migrations**: Manages database schema changes seamlessly with Alembic.
 
 ## 🛠️ Technology Stack
-- Framework: FastAPI
-- Database ORM: SQLAlchemy
-- Database Migrations: Alembic
-- Database: PostgreSQL (or your preferred SQL database)
-- Authentication: python-jose (for JWT) & passlib (for hashing)
-- Pydantic: For data validation and settings management.
+- **Framework**: FastAPI (uvicorn)
+- **Database ORM**: SQLAlchemy
+- **Database Migrations**: Alembic
+- **Database**: SQLite (default configured to `SMC.db`), PostgreSQL compatible.
+- **Authentication**: `python-jose` (for JWT) & `argon2-cffi` (for password hashing).
+- **Caching & Blacklisting**: Redis container/server for token management.
 
 ---
 
 ## 🚀 Getting Started
+
 ### Prerequisites
 - Python 3.9+
-- PostgreSQL (or Docker for a containerized database)
+- Redis Server (Must be running for logout/blacklisting features)
+- SQLite (or PostgreSQL/MySQL as preferred)
 - pip (Python package manager)
-
 
 ### Installation
 1. Clone the repository:
@@ -35,50 +36,75 @@ Built with FastAPI for high performance, SQLAlchemy for database ORM, and Alembi
 git clone https://github.com/PeterOyelegbin/smart-healthcare.git
 cd smart-healthcare/authentication_service
 ```
+
 2. Create and activate a virtual environment:
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
+
 3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
-4. Set up environment variables:
-```bash
+
+4. Set up environment variables (`.env`):
+```env
 # Database Configuration
 DATABASE_URL=postgresql://user:password@localhost:5432/smart_health_auth_db
 
 # JWT Configuration
-SECRET_KEY=your-super-secret-jwt-key-change-in-production
+SECRET_KEY=your-super-secret-jwt-key
 ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+ACCESS_TOKEN_EXPIRE_MINUTES=15
+REFRESH_TOKEN_EXPIRE_DAYS=1
+
+# Redis Configuration (Required for Token Blacklisting)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+
+# Check codebase for optional KYC verification APIs configs
 ```
+
 5. Run database migrations with Alembic:
-This will create the necessary tables in your database.
+Setup the application database with its relative schema.
 ```bash
 alembic upgrade head
 ```
+
 6. Start the development server:
 ```bash
-# Dev
+# Dev environment
 fastapi dev main.py
 
-# Prod
-uvicorn app.main:app --reload
+# Prod environment
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
-The API will be available at http://localhost:8000. You can view the interactive API documentation at http://localhost:8000/docs.
+The API covers multiple environments definitions. Locally, it will be available at `http://localhost:8000`. You can view the interactive API documentation at `http://localhost:8000/docs`.
 
 
-## 🔐 Authentication Flow
-- Registration: A user sends a POST request to /api/v1/auth/register with their email, password, and role. The password is hashed, and the user is stored in the database.
-- Login: The user sends a POST request to /api/v1/auth/login (using OAuth2 Password flow) with their email and password.
-- Token Issuance: If credentials are valid, the server returns a JSON response containing an access_token (JWT) and a token_type (usually "bearer").
-- Accessing Protected Endpoints: For subsequent requests, the client includes the token in the
-    * Authorization header:
-    * Authorization: Bearer <your_access_token>
--  Token Validation: The service validates the token on each request, extracts the user's identity and role, and grants or denies access.
+## 🔐 Endpoints & Flow
 
+### Health & Monitoring Endpoints
+- `GET /` and `GET /health`: Service health checks stating status and version.
+
+### Authentication Endpoints (`/api/v1/auth`)
+- `POST /register`: Register a new organization user.
+- `POST /login`: Authenticate and receive `access_token` and `refresh_token`.
+- `POST /refresh`: Issue a new access token using a valid refresh token.
+- `POST /logout`: Logout the user and safely blacklist the access/refresh tokens on Redis.
+
+### Current User Endpoints (`/api/v1/users`)
+- `GET /me/profile`: Retrieve the current authenticated user's local profile (`email`, `organisation`, etc).
+- `PATCH /me/password-update`: Safely update the logged-in user's password requiring old password verification.
+
+### Administration Endpoints (`/api/v1/users`)
+*Requires the authenticated user's `is_admin` parameter to be True.*
+- `GET /`: Retrieve all registered users in the system.
+- `GET /{user_id}`: Retrieve a specific user by their Unique ID.
+- `PATCH /{user_id}/toggle-status`: Activate or deactivate a given user account access.
+- `DELETE /{user_id}`: Hard-delete a user locally from the network.
 
 ## 🗄️ Database Migrations (Alembic)
 This project uses Alembic to manage database schema changes.
@@ -100,11 +126,10 @@ alembic downgrade -1
 ## 🤝 Contributing
 Contributions are welcome! Please ensure that any new features or bug fixes include appropriate tests and documentation.
 1. Fork the repository.
-2. Create a feature branch (git checkout -b feature/AmazingFeature).
-3. Commit your changes (git commit -m 'Add some AmazingFeature').
-4. Push to the branch (git push origin feature/AmazingFeature).
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
 5. Open a Pull Request.
-
 
 ## 📄 License
 This project is licensed under the MIT License.

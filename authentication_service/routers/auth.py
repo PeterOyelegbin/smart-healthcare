@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, status
+from fastapi import APIRouter, Depends, Request, BackgroundTasks, HTTPException, status
 from sqlalchemy.orm import Session
-from database import schema
+from database import schema, models
 from database.db_config import get_db, redis_client
-from utils.auth import register_user, authenticate_user, get_current_user, blacklist_token
-from utils.security import refresh_access_token, decode_token
+from utils.auth import register_user, authenticate_user, get_current_user, blacklist_token, send_email, password_reset
+from utils.security import refresh_access_token, decode_token, create_password_reset_token
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
@@ -61,4 +61,44 @@ async def logout(refresh_token: str, request: Request, current_user: schema.User
         return {"message": "Successfully logged out"}        
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred during logout: {str(e)}")
+    
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+async def reset_password(data: schema.ResetPassword, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """
+    Request password reset - sends email with reset URL containing reset token
+    """
+    try:
+        existing_user = db.query(models.User).filter(models.User.email == data.email).first()
+        if not existing_user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User with this email does not exist")
+        reset_token = create_password_reset_token({"sub": data.email})
+        # Send password reset email in background
+        bg_tasks.add_task(send_email, existing_user.organisation, existing_user.email, reset_token)
+        return {"message": "Password reset instructions sent to your email"}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred during password reset: {str(e)}")
+    
+@router.post("/confirm-password", status_code=status.HTTP_200_OK)
+async def confirm_password(data: schema.ConfirmPassword, db: Session = Depends(get_db)):
+    """
+    Confirm password reset using token
+    """
+    try:
+        payload = decode_token(data.token)
+        user_email = payload.get("sub")
+        user = db.query(models.User).filter(models.User.email == user_email).first()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        if data.new_password != data.confirm_password:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New password and confirm password do not match")
+        updated_user = password_reset(db, user, data.new_password)
+        if not updated_user:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to update password")
+        return {"message": "Password reset successful"}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred during password reset: {str(e)}")
     

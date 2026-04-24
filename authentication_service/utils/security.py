@@ -5,8 +5,44 @@ from jose import jwt
 from uuid import uuid4
 from decouple import config
 from database.db_config import redis_client
+from requests import request
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+def youverify_kyb(data: dict):
+    url = config('YOUVERIFY_API_URL')
+    headers = {'Content-Type': 'application/json', 'token': config('YOUVERIFY_API_KEY')}
+    payload = {
+        "registrationNumber": data.registration_number,
+        "isConsent": data.is_consent
+    }
+    response = request("POST", url, headers=headers, json=payload)
+    print(response.json())
+    return response.json()
+
+def dojah_kyb(data: dict):
+    url = config('DOJAH_API_URL')
+    headers = {'Content-Type': 'application/json', 'AppId': config('DOJAH_APP_ID'), 'Authorization': config("DOJAH_API_KEY")}
+    payload = {
+        "rc_number": data.registration_number,
+        "company_type": data.business_name
+    }
+    response = request("POST", url, headers=headers, json=payload)
+    print(response.json())
+    return response.json()
+
+def verify_company(user_data: dict) -> dict:
+    try:
+        main_verification = youverify_kyb(user_data)
+        if main_verification.get("success"):
+            return main_verification
+        backup_verification = dojah_kyb(user_data)
+        if backup_verification.get("success"):
+            return backup_verification
+        else:
+            raise Exception("All verification providers failed")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Company verification failed: {str(e)}")
 
 def hash_password(password: str):
     return pwd_context.hash(password)
@@ -30,6 +66,12 @@ def create_refresh_token(data: dict) -> str:
         int(timedelta(days=config('REFRESH_TOKEN_EXPIRE_DAYS', cast=int)).total_seconds()),
         data.get("sub")
     )
+    return jwt.encode(to_encode, config('SECRET_KEY'), algorithm=config('ALGORITHM'))
+
+def create_password_reset_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=config('PASSWORD_RESET_TOKEN_EXPIRE_MINUTES', cast=int))
+    to_encode.update({"exp": expire, "type": "reset"})
     return jwt.encode(to_encode, config('SECRET_KEY'), algorithm=config('ALGORITHM'))
 
 def create_token_pair(data: dict) -> dict:

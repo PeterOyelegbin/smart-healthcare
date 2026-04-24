@@ -1,4 +1,5 @@
 fastapi[standard]
+requests
 sqlalchemy
 alembic
 python-jose
