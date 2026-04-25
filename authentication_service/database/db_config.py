@@ -9,7 +9,7 @@ engine = create_engine(config('DATABASE_URL'), connect_args={"check_same_thread"
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 # create redis client
-redis_client = Redis(host=config('REDIS_HOST'), port=config('REDIS_PORT'), db=config('REDIS_DB'), decode_responses=True)
+redis_client = Redis(host=config('REDIS_HOST'), port=config('REDIS_PORT'), password=config('REDIS_PASSWORD'), db=0, decode_responses=True)
 
 Base = declarative_base()
 

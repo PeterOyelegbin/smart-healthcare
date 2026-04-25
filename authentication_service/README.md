@@ -51,18 +51,24 @@ pip install -r requirements.txt
 4. Set up environment variables (`.env`):
 ```env
 # Database Configuration
-DATABASE_URL=postgresql://user:password@localhost:5432/smart_health_auth_db
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=smart_health_user
+DB_PASSWORD=secure_password_change_me
+DB_NAME=smart_health_auth_db
+DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_PASSWORD=redis_password_change_me
 
 # JWT Configuration
 SECRET_KEY=your-super-secret-jwt-key
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=15
 REFRESH_TOKEN_EXPIRE_DAYS=1
-
-# Redis Configuration (Required for Token Blacklisting)
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_DB=0
 
 # Email Configuration
 SMTP_HOST=smtp.gmail.com
