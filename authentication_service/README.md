@@ -64,6 +64,18 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_DB=0
 
+# Email Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=app@gmail.com
+SMTP_PASSWORD=your-app-password
+EMAIL_FROM=app@gmail.com
+EMAIL_FROM_NAME="SmartHealthCare App Support"
+
+# Frontend URL for reset link
+PASSWORD_RESET_TOKEN_EXPIRE_MINUTES=5
+FRONTEND_URL="http://localhost:3000"
+
 # Check codebase for optional KYC verification APIs configs
 ```
 
@@ -94,6 +106,8 @@ The API covers multiple environments definitions. Locally, it will be available 
 - `POST /login`: Authenticate and receive `access_token` and `refresh_token`.
 - `POST /refresh`: Issue a new access token using a valid refresh token.
 - `POST /logout`: Logout the user and safely blacklist the access/refresh tokens on Redis.
+- `POST /reset-password`: Request password reset and sends email with reset URL containing reset token.
+- `POST /confirm-password`: Set new password using token sent to user to validate request.
 
 ### Current User Endpoints (`/api/v1/users`)
 - `GET /me/profile`: Retrieve the current authenticated user's local profile (`email`, `organisation`, etc).
@@ -133,20 +147,3 @@ Contributions are welcome! Please ensure that any new features or bug fixes incl
 
 ## 📄 License
 This project is licensed under the MIT License.
-
-
-
-## Project Initialization
-1. Initialize Alembic (run once)
-`alembic init alembic`
-
-2. Configure your database URL
-```alembic.ini
-sqlalchemy.url = sqlite:///./auth.db
-```
-
-3. Connect Alembic to your models
-```alembic/env.py
-from app.database import Base  # adjust import path
-target_metadata = Base.metadata
-```

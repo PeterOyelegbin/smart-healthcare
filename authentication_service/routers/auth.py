@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, Request, BackgroundTasks, HTTPException,
 from sqlalchemy.orm import Session
 from database import schema, models
 from database.db_config import get_db, redis_client
-from utils.auth import register_user, authenticate_user, get_current_user, blacklist_token, send_email, password_reset
+from utils.compliance import verify_company
+from utils.auth import register_user, authenticate_user, get_current_user, blacklist_token, password_reset
 from utils.security import refresh_access_token, decode_token, create_password_reset_token
+from utils.mail import send_password_reset_email
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
@@ -13,6 +15,10 @@ async def register(user: schema.Signup, db: Session = Depends(get_db)):
     Register a new user
     """
     try:
+        verification = verify_company(user)
+        print(verification.get("success"))
+        if not verification.get("success"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Company verification failed, check your details and try again.")    
         return register_user(db, user)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -73,7 +79,7 @@ async def reset_password(data: schema.ResetPassword, bg_tasks: BackgroundTasks, 
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User with this email does not exist")
         reset_token = create_password_reset_token({"sub": data.email})
         # Send password reset email in background
-        bg_tasks.add_task(send_email, existing_user.organisation, existing_user.email, reset_token)
+        bg_tasks.add_task(send_password_reset_email, existing_user.organisation, existing_user.email, reset_token)
         return {"message": "Password reset instructions sent to your email"}
     except HTTPException as e:
         raise e
