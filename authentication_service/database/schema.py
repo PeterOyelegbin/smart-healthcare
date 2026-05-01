@@ -1,6 +1,8 @@
-from pydantic import BaseModel, EmailStr, FileUrl, StringConstraints
-from typing import Optional, Annotated
+from pydantic import BaseModel, EmailStr, StringConstraints
+from typing import Optional, Literal, Annotated
 from uuid import UUID
+
+BusinessType = Literal["BUSINESS_NAME", "COMPANY", "INCORPORATED_TRUSTEES", "LIMITED_PARTNERSHIP", "LIMITED_LIABILITY_PARTNERSHIP"]
 
 class User(BaseModel):
     id: Optional[UUID]
@@ -18,6 +20,7 @@ class User(BaseModel):
 class Signup(BaseModel):
     business_name: str
     registration_number: str
+    business_type: list[BusinessType] = ["BUSINESS_NAME"]
     email: EmailStr
     password: Annotated[str, StringConstraints(min_length=6, max_length=50)]
     is_consent: bool

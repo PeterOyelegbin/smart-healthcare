@@ -116,7 +116,7 @@ The API covers multiple environments definitions. Locally, it will be available 
 - `POST /confirm-password`: Set new password using token sent to user to validate request.
 
 ### Current User Endpoints (`/api/v1/users`)
-- `GET /me/profile`: Retrieve the current authenticated user's local profile (`email`, `organisation`, etc).
+- `GET /me/profile`: Retrieve the current authenticated user's local profile (`email`, `business_name`, etc).
 - `PATCH /me/password-update`: Safely update the logged-in user's password requiring old password verification.
 
 ### Administration Endpoints (`/api/v1/users`)

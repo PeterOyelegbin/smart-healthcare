@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, users, admin
 from utils.security import decode_token
 from utils.logger import time, logger
@@ -23,6 +24,11 @@ app = FastAPI(
     license_info={"name": "MIT",},
 )
 
+# Configure CORS to allow requests from the frontend
+app.add_middleware(
+    CORSMiddleware, allow_origins=["http://localhost:3000", "http://127.0.0.1:8000", "https://shc.kodashub.com", "https://www.shc.kodashub.com"],
+    allow_methods=["*"], allow_headers=["*"],
+)
 
 # Log all requests automatically using middleware
 @app.middleware("http")

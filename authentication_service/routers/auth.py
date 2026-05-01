@@ -15,8 +15,9 @@ async def register(user: schema.Signup, db: Session = Depends(get_db)):
     Register a new user
     """
     try:
+        if db.query(models.User).filter(models.User.email == user.email).first():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
         verification = verify_company(user)
-        print(verification.get("success"))
         if not verification.get("success"):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Company verification failed, check your details and try again.")    
         return register_user(db, user)
@@ -79,7 +80,7 @@ async def reset_password(data: schema.ResetPassword, bg_tasks: BackgroundTasks, 
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User with this email does not exist")
         reset_token = create_password_reset_token({"sub": data.email})
         # Send password reset email in background
-        bg_tasks.add_task(send_password_reset_email, existing_user.organisation, existing_user.email, reset_token)
+        bg_tasks.add_task(send_password_reset_email, existing_user.business_name, existing_user.email, reset_token)
         return {"message": "Password reset instructions sent to your email"}
     except HTTPException as e:
         raise e
