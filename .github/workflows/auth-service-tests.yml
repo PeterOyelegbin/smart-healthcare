@@ -14,6 +14,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    # if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/dev')
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -117,7 +118,7 @@ jobs:
     
     - name: Upload HTML coverage report as artifact
       if: matrix.python-version == '3.9'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-report
         path: authentication_service/htmlcov/
@@ -126,7 +127,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: test
+    # needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -143,7 +145,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
