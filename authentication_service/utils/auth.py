@@ -9,7 +9,7 @@ oauth2_scheme = security.HTTPBearer()
 
 def register_user(db: Session, user_data):
     hashed_pw = hash_password(user_data.password)
-    user = User(business_name=user_data.business_name, registration_number=user_data.registration_number, email=user_data.email, password=hashed_pw, is_consent=user_data.is_consent, verified=True)
+    user = User(business_name=user_data.business_name, registration_number=user_data.registration_number, email=(user_data.email).lower(), password=hashed_pw, is_consent=user_data.is_consent, verified=True)
     db.add(user)
     db.commit()
     db.refresh(user)

@@ -11,7 +11,7 @@ def youverify_kyb(data: dict):
         "isConsent": data.is_consent
     }
     try:
-        response = request("POST", url, headers=headers, json=payload, timeout=10)
+        response = request("POST", url, headers=headers, json=payload, timeout=20)
         response.raise_for_status()
         return response.json()
     except Exception as e:
@@ -26,7 +26,7 @@ def dojah_kyb(data: dict):
         "company_type": data.business_name
     }
     try:
-        response = request("GET", url, headers=headers, json=payload, timeout=10)
+        response = request("GET", url, headers=headers, json=payload, timeout=20)
         response.raise_for_status()
         return response.json()
     except Exception as e:

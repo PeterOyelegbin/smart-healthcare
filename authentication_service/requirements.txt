@@ -7,3 +7,9 @@ argon2-cffi
 redis
 python-decouple
 uvicorn
+
+passlib
+pytest
+pytest-cov
+pytest-asyncio
+httpx
