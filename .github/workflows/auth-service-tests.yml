@@ -78,6 +78,23 @@ jobs:
       REDIS_HOST: localhost
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
+      SECRET_KEY: ""
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 15
+      REFRESH_TOKEN_EXPIRE_DAYS: 1
+      SMTP_HOST: wghp1.wghservers.com
+      SMTP_PORT: 587
+      SMTP_USERNAME: noreply@peteroyelegbin.com.ng
+      SMTP_PASSWORD: ""
+      EMAIL_FROM: noreply@peteroyelegbin.com.ng
+      EMAIL_FROM_NAME: "SmartHealthCare App Support"
+      PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: 5
+      FRONTEND_URL: "http://localhost:3000"
+      YOUVERIFY_API_URL: https://api.sandbox.youverify.co/v2/api/verifications/ng/company/basic
+      YOUVERIFY_API_KEY: ""
+      DOJAH_API_URL: https://sandbox.dojah.io/api/v1/kyc/cac/basic
+      DOJAH_API_KEY: ""
+      DOJAH_APP_ID: ""
     
     steps:
     - name: Checkout code
