@@ -75,6 +75,9 @@ jobs:
     
     env:
       DATABASE_URL: sqlite:///test.db
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
     
     steps:
     - name: Checkout code
