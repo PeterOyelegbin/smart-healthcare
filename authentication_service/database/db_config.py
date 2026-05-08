@@ -5,7 +5,7 @@ from redis import Redis
 from decouple import config
 
 # create database engine
-engine = create_engine(config('DATABASE_URL'), connect_args={"check_same_thread": False})
+engine = create_engine(config('DATABASE_URL'))
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 # create redis client

@@ -1,2 +1,4 @@
 # Ignore documentation files
 RUNBOOK*
+vercel.json
+build.sh

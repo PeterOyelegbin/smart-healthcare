@@ -1,6 +1,7 @@
 fastapi[standard]
 requests
 sqlalchemy
+psycopg2-binary
 alembic
 python-jose
 argon2-cffi
