@@ -5,7 +5,7 @@ on:
     branches: [ main, dev ]
     paths:
       - 'authentication_service/**'
-      - '.github/workflows/auth-service-tests.yml'
+      - '.github/workflows/auth-service.yml'
   pull_request:
     branches: [ main ]
     paths:
@@ -14,8 +14,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    # if: github.event_name == 'pull_request' && github.base_ref == 'main'
-    # if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/dev')
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
