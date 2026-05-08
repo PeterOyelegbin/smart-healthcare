@@ -5,7 +5,7 @@ from decouple import config
 from .logger import logger
 
 email_from_name = config('EMAIL_FROM_NAME')
-email_from = config('EMAIL_FROM')
+email_from = config('SMTP_USERNAME')
 smtp_host = config('SMTP_HOST')
 smtp_port = config('SMTP_PORT', cast=int)
 smtp_username = config('SMTP_USERNAME')
