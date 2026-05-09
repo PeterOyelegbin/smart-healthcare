@@ -7,8 +7,8 @@ python-jose
 argon2-cffi
 redis
 python-decouple
+python-json-logger
 uvicorn
-
 passlib
 pytest
 pytest-cov
