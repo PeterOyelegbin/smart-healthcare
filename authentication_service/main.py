@@ -6,13 +6,15 @@ from utils.logger import time, logger
 
 # initialize the application
 app = FastAPI(
-    title="Smart Healthcare Authentication Service - FastAPI",
+    title="Smart Health Care (Authentication Service) - FastAPI",
     description="Authentication service for managing user authentication and authorization",
     version="0.0.1",
     servers=[
         {"url": "http://localhost:8000", "description": "Local development server"},
-        {"url": "https://authservice-test.smarthealthcare.com", "description": "Test server"},
-        {"url": "https://authservice.smarthealthcare.com", "description": "Production server"}
+        {"url": "https://authservice-test.shc.kodashub.com", "description": "Test server 1"},
+        {"url": "https://smarthealthcare-five.vercel.app", "description": "Test server 2"},
+        {"url": "https://authservice-shc.vercel.app", "description": "Test server 3"},
+        {"url": "https://authservice.shc.kodashub.com", "description": "Production server"}
     ],
     # root_path="/api/v1",
     # root_path_in_servers=True,
