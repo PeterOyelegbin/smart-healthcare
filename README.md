@@ -15,11 +15,11 @@ The system is designed to unify fragmented healthcare data by providing a scalab
 The application follows a microservice architecture where each core domain is managed by an independent service. Services communicate through APIs and service-to-service messaging.
 
 Typical services may include:
+- Authentication & Authorization Service
 - Patient Service
 - Medical Records Service
 - Pharmacy Service
 - Insurance Service
-- Authentication & Authorization Service
 - API Gateway
 
 ## 🔐 Security

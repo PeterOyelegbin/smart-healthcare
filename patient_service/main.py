@@ -1,23 +1,32 @@
+import sys
+from pathlib import Path
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from database.db_config import Base, engine, redis_client
 from decouple import config
-from utils.security import decode_token
-from utils.logger import time, logger
-from routers import auth, users, admin
+from routers import patients
+# from utils.security import decode_token
+
+# Ensure the shared package directory is importable
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from shared.logging_config import logger, time
+
 
 # initialize the application
 app = FastAPI(
-    title="Smart Health Care (Authentication Service) - FastAPI",
-    description="Authentication service for managing user authentication and authorization",
+    title="Smart Health Care (Patient Service) - FastAPI",
+    description="Patient service for managing patient records and information",
     version="0.0.1",
     servers=[
         {"url": "http://localhost:8000", "description": "Local development server"},
-        {"url": "https://authservice-test.shc.kodashub.com", "description": "Test server 1"},
+        {"url": "https://patientservice-test.shc.kodashub.com", "description": "Test server 1"},
         {"url": "https://smarthealthcare-five.vercel.app", "description": "Test server 2"},
-        {"url": "https://authservice-shc.vercel.app", "description": "Test server 3"},
-        {"url": "https://authservice.shc.kodashub.com", "description": "Production server"}
+        {"url": "https://patientservice-shc.vercel.app", "description": "Test server 3"},
+        {"url": "https://patientservice.shc.kodashub.com", "description": "Production server"}
     ],
     # root_path="/api/v1",
     # root_path_in_servers=True,
@@ -76,13 +85,13 @@ async def rate_limit_middleware(request: Request, call_next):
 async def audit_middleware(request: Request, call_next):
     start_time = time.time()
     user_email = "Anonymous"
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header.split(" ")[1]
-        try:
-            user_email = decode_token(token).get("sub")
-        except Exception:
-            user_email = "Authentication Failed"
+    # auth_header = request.headers.get("Authorization")
+    # if auth_header and auth_header.startswith("Bearer "):
+    #     token = auth_header.split(" ")[1]
+    #     try:
+    #         user_email = decode_token(token).get("sub")
+    #     except Exception:
+    #         user_email = "Authentication Failed"
     response = await call_next(request)
     process_time = round(time.time() - start_time, 3)
     log_data = {"method": request.method, "path": request.url.path, "status_code": response.status_code,
@@ -99,13 +108,11 @@ async def audit_middleware(request: Request, call_next):
 # Health check endpoint
 @app.get("/", tags=["Health"])
 async def home():
-    return {"message": "Authentication service is running"}
+    return {"message": "Patient service is running"}
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    return {"status": "healthy", "service": "authentication", "version": "0.0.1"}
+    return {"status": "healthy", "service": "patient", "version": "0.0.1"}
 
 # Include all routers
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(admin.router)
+app.include_router(patients.router)
