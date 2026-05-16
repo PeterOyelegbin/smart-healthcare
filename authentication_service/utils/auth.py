@@ -39,19 +39,19 @@ def is_token_blacklisted(token: str) -> bool:
     key = f"blacklist:{token}"
     return redis_client.exists(key) > 0
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     if is_token_blacklisted(token.credentials):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired, login again to continue.")
     user_email = decode_token(token.credentials).get("sub")
     user = db.query(User).filter(User.email == user_email).first()
     return user
     
-def require_admin(current_user: User = Depends(get_current_user)):
+def require_admin(current_user: User = Depends(get_current_user)) -> User:
     if not current_user or not current_user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
     return current_user
 
-def password_update(db: Session, user: User, old_password: str, new_password: str):
+def password_update(db: Session, user: User, old_password: str, new_password: str) -> User:
     if not verify_password(old_password, user.password):
         return None
     hashed_pw = hash_password(new_password)
@@ -61,7 +61,7 @@ def password_update(db: Session, user: User, old_password: str, new_password: st
     logger.info(f"Password updated successfully by user: {user.email}")
     return user
     
-def password_reset(db: Session, user: User, new_password: str):
+def password_reset(db: Session, user: User, new_password: str) -> User:
     """Reset user password"""
     hashed_pw = hash_password(new_password)
     user.password = hashed_pw

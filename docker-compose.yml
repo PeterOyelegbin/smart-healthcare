@@ -1,0 +1,78 @@
+version: "3.9"
+
+services:
+
+  # ── API Gateway ──────────────────────────────────────────────────────────────
+  api-gateway:
+    build: ./api-gateway
+    container_name: healthcare-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      AUTH_SERVICE_URL:    "http://auth-service:8001"
+      PATIENT_SERVICE_URL: "http://patient-service:8002"
+      ALLOWED_ORIGINS:     "*"
+      RATE_LIMIT_REQUESTS: "100"
+      RATE_LIMIT_WINDOW:   "60"
+    depends_on:
+      - auth-service
+      - patient-service
+    networks:
+      - healthcare-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Auth Service ─────────────────────────────────────────────────────────────
+  auth-service:
+    build: ./auth-service
+    container_name: healthcare-auth
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL:                  "sqlite:///./auth.db"
+      SECRET_KEY:                    "change-me-in-production-use-32-char-min"
+      ACCESS_TOKEN_EXPIRE_MINUTES:   "30"
+      REFRESH_TOKEN_EXPIRE_DAYS:     "7"
+      ALLOWED_ORIGINS:               "*"
+    volumes:
+      - auth-data:/app
+    networks:
+      - healthcare-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/auth/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Patient Service ──────────────────────────────────────────────────────────
+  patient-service:
+    build: ./patient-service
+    container_name: healthcare-patients
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL:    "sqlite:///./patients.db"
+      ALLOWED_ORIGINS: "*"
+    volumes:
+      - patient-data:/app
+    networks:
+      - healthcare-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/patients/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  auth-data:
+  patient-data:
+
+networks:
+  healthcare-net:
+    driver: bridge

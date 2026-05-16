@@ -3,13 +3,13 @@ requests
 sqlalchemy
 psycopg2-binary
 alembic
-python-jose
+python-jose[cryptography]
 argon2-cffi
 redis
 python-decouple
 python-json-logger
-uvicorn
-passlib
+uvicorn[standard]
+passlib[bcrypt]
 pytest
 pytest-cov
 pytest-asyncio

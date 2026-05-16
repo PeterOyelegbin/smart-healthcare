@@ -13,10 +13,10 @@ password_token_expires = config('PASSWORD_RESET_TOKEN_EXPIRE_MINUTES', cast=int)
 secret_key = config('SECRET_KEY')
 algorithm = config('ALGORITHM')
 
-def hash_password(password: str):
+def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
-def verify_password(plain: str, hashed: str):
+def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 def create_access_token(data: dict) -> str:
@@ -49,7 +49,7 @@ def create_token_pair(data: dict) -> dict:
         "refresh_token": create_refresh_token(data)
     }
 
-def decode_token(token: str):
+def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, secret_key, algorithms=[algorithm])
         return payload

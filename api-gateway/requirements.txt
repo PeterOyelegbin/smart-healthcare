@@ -1,0 +1,7 @@
+fastapi[standard]
+python-decouple
+python-json-logger
+python-multipart
+redis
+httpx
+uvicorn[standard]

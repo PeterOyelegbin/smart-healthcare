@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Request, BackgroundTasks, HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 from database import schema, models
 from database.db_config import get_db, redis_client
 from utils.compliance import verify_company
@@ -16,7 +17,7 @@ async def register(user: schema.Signup, db: Session = Depends(get_db)):
     """
     try:
         if db.query(models.User).filter(models.User.email == user.email).first():
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
         verification = verify_company(user)
         if not verification.get("success"):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Company verification failed, check your details and try again.")    
@@ -25,13 +26,18 @@ async def register(user: schema.Signup, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     
 @router.post("/login", response_model=schema.Token)
-async def login(user: schema.Login, db: Session = Depends(get_db)):
+async def login(payload: schema.Login, db: Session = Depends(get_db)):
     """
-    Login and get access token
+    Login and get JWT tokens
     """
-    token = authenticate_user(db, user.email, user.password)
+    user = db.query(models.User).filter_by(email=payload.email).first()
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is deactivated")
+    token = authenticate_user(db, payload.email, payload.password)
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials", headers={"WWW-Authenticate": "Bearer"})
+    user.last_login = datetime.now(timezone.utc)
+    db.commit()
     return {"access_token": token["access_token"], "refresh_token": token["refresh_token"], "token_type": "bearer"}
 
 @router.post("/refresh")
@@ -108,4 +114,20 @@ async def confirm_password(data: schema.ConfirmPassword, db: Session = Depends(g
         raise e
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred during password reset: {str(e)}")
+    
+@router.get("/verify", status_code=status.HTTP_200_OK)
+def verify_token(request: Request, db: Session = Depends(get_db)):
+    """
+    Verify the validity of a JWT access token and return user info if valid
+    """
+    # Get token from Authorization header
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization header format. Expected 'Bearer <token>'")
+    token = auth_header.split(" ")[1]
+    try:
+        user = get_current_user(token, db)
+        return {"valid": True, "user_id": user.id, "email": user.email, "is_admin": user.is_admin, "message": "Token is valid"}
+    except HTTPException as e:
+        return {"valid": False, "message": e.detail}
     

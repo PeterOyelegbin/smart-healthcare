@@ -22,6 +22,9 @@ app = FastAPI(
     # root_path="/api/v1",
     # root_path_in_servers=True,
     # openapi_url="/docs",
+    docs_url="/auth/docs",
+    redoc_url="/auth/redoc",
+    openapi_url="/auth/openapi.json",
     contact={
         "name": "Peter Oyelegbin",
         "email": "peteroyelegbin@gmail.com",
@@ -39,8 +42,8 @@ def on_startup():
 
 # ================== Configure CORS to allow requests from the frontend ==================
 app.add_middleware(
-    CORSMiddleware, allow_origins=["http://localhost:3000", "http://127.0.0.1:8000", "https://shc.kodashub.com", "https://www.shc.kodashub.com"],
-    allow_methods=["*"], allow_headers=["*"],
+    CORSMiddleware, allow_origins=config('ALLOWED_ORIGINS', default='*').split(','),
+    allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
 )
 
 
