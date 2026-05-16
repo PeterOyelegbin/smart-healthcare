@@ -4,16 +4,9 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from database.db_config import Base, engine, redis_client
+from utils.logger import logger, time
 from decouple import config
 from routers import patients
-# from utils.security import decode_token
-
-# Ensure the shared package directory is importable
-ROOT_DIR = Path(__file__).resolve().parent.parent
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
-
-from shared.logging_config import logger, time
 
 
 # initialize the application
